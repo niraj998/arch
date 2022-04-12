@@ -1,0 +1,347 @@
+#!/bin/dash
+
+# author Niraj
+# Git    niraj998
+
+# What is this
+if [ -z $1 ]; then
+cat <<- EOF
+startup 
+   This script just helps with arch installation, It has all the commands to install and setup archlinux. you can run individual functions at any point after installation to resetup something.
+   Before running script, look through script and customize commands according to your system.
+
+startup [function]
+
+  functions: (run from bootable media)
+    set_mirrors,   Refresh mirrors with reflector.
+    set_fstab,     Generate fstab.
+
+  functions: (run as chroot/root)
+    set_time,      Setups system time.
+    set_hosts,     Setups host.
+    set_locale,    Sets locale.
+    set_network,       Setup NetworkManager.
+    install_grub,  Install grub (UEFI ONLY).
+    grub_config,   Recreated grub config.
+    create_user,   Create user.
+    set_sudo,      Add user to sudoers.
+    packages,      Install necessary packages.
+
+  functions: (run as user)
+    install_yay,   Install AUR helper.
+    install_xorg,  Install xorg packages.
+    install_gui,   Install gui programs.
+EOF
+exit
+fi
+
+. /etc/os-release
+LOCALE="en_IN.UTF-8 UTF-8"
+HOSTNAME="arch"
+USERNAME="niraj"
+TIMEZONE="Asia/Kolkata"
+
+# loadkeys 
+# loadkeys us   #only in console
+
+# This function echo's all the comments and reference throughout script.
+echofunction() {
+echo "$@" && sleep 1
+# You can remove sleep 1 if you want, it helps keep track of what's script is doing. 
+}
+
+# REFRESH MIRRORS
+set_mirrors() { #run as root
+   echofunction Installing reflector.
+   pacman -S reflector --noconfirm --needed
+
+   echofunction Refreshing mirrors with reflector.
+   reflector -c India,US,Germany -p https,http --sort rate --save /etc/pacman.d/mirrorlist
+}
+
+# SETUP FSTAB
+set_fstab() { #run as root
+ echofunction Generating Fstab
+ if [ "$NAME" = "Artix Linux" ]; then
+   # At time of Installation, (from bootable device.)
+   fstabgen -U /mnt > /mnt/etc/fstab
+
+   # mount drive on startup with user previlage, replace UUID with your own.
+   echofunction Adding media entry to fstab.
+   [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
+
+   # After installation. (you need install scripts package. for this) 
+   # fstabgen -U / > /etc/fstab
+
+   # mount drive on startup with user previlage, replace UUID with your own if you want.
+   # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
+
+ else
+   # At time of Installation, (from bootable device.)
+   genfstab -U /mnt > /mnt/etc/fstab
+
+   # mount drive on startup with user previlage, replace UUID with your own.
+   echofunction Adding media entry to fstab.
+   [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
+
+   # After installation. (you need install scripts package. for this)
+   # genfstab -U / > /etc/fstab
+
+   # mount drive on startup with user previlage, replace UUID with your own if you want.
+   # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
+
+ fi
+}
+
+# SETUP LOCALE
+set_locale() { #run as root
+   echofunction Settingup Locale.
+   echofunction Adding $LOCALE to locale.gen
+   grep "^${LOCALE%% *}" /etc/locale.gen >/dev/null || echo "$LOCALE" >> /etc/locale.gen
+
+   # create locale.conf file.
+   [ -f "/etc/locale.conf" ] || touch /etc/locale.conf
+
+   echofunction Adding LANG=${LOCALE%% *} to locale.conf
+   grep "^LANG=${LOCALE%% *}" /etc/locale.conf >/dev/null || echo "LANG=${LOCALE%% *}" > /etc/locale.conf
+
+   echofunction Adding LC_ALL=${LOCALE%% *} to /etc/environment
+   grep "^LC_ALL=${LOCALE%% *}" /etc/environment >/dev/null || echo "LC_ALL=${LOCALE%% *}" >> /etc/environment
+
+   echofunction Generating locale
+   locale-gen
+}
+
+# SETUP HOSTS
+set_hosts() { #run as root
+   echofunction Adding host $HOSTNAME to /etc/hostname and /etc/hosts
+   # set hostname
+   grep "$HOSTNAME" /etc/hostname  >/dev/null || echo $HOSTNAME > /etc/hostname
+
+   # stop if hosts already set 
+   grep "$HOSTNAME.localdomain" /etc/hosts >/dev/null && return
+
+   # echo hostname in hosts.
+echo "
+127.0.0.1  localhost
+::1  localhost
+127.0.1.1  $HOSTNAME.localdomain  $HOSTNAME
+" >> /etc/hosts
+}
+
+
+# SET TIME
+set_time() { #run as root
+   echofunction Setting up time
+   if [ "$NAME" = "Artix Linux" ]; then
+   # Link localtime only if doesn't exist already
+   ln -sf /usr/share/zoneinfo/$TIMEZONE  /etc/localtime
+
+   # set systemclock to hw clock
+   hwclock --systohc
+
+   else
+
+   # Syncronize time
+   timedatectl set-ntp true
+
+   # set systemclock to hw clock
+   hwclock --systohc
+
+   # Link localtime only if doesn't exist already
+   ln -sf /usr/share/zoneinfo/$TIMEZONE  /etc/localtime
+
+   # Set Timezone
+   timedatectl set-timezone "$TIMEZONE"
+   fi
+}
+
+
+# SETUP NETWORK
+set_network() { #run as root
+   echofunction Settingup NetworkManager and Bluetooth
+ if [ "$NAME" = "Artix Linux" ]; then
+   echofunction Installing NetworkManager Packages
+   pacman -Sy networkmanager networkmanager-runit wpa_supplicant-runit wpa_supplicant dhcpcd dhcpcd-runit --noconfirm --needed
+
+   echofunction Enabling NetworkManager services
+#   ln -s /etc/runit/sv/NetworkManager  /etc/runit/runsvdir/current
+    ln -s /etc/runit/sv/NetworkManager /run/runit/service
+
+   echofunction Installing Bluetooth
+   pacman -Syu bluez bluez-runit bluez-utils --needed --noconfirm
+
+   echofunction Enabling Bluetooth Service
+#   ln -s /etc/runit/sv/bluetoothd  /etc/runit/runsvdir/current
+    ln -s /etc/runit/sv/bluetoothd /run/runit/service
+
+ else
+
+   echofunction Installing NetworkManager Packages
+   pacman -Syu networkmanager dhcpcd --needed --noconfirm
+
+   echofunction Enabling NetworkManager services
+   systemctl enable NetworkManager
+   # systemctl start NetworkManager
+
+   echofunction Installing Bluetooth
+   pacman -Syu bluez bluez-utils --needed --noconfirm
+
+   echofunction Enabling Bluetooth Service
+   systemctl enable bluetooth
+   # systemctl start bluetooth
+ fi
+}
+
+# GRUB
+grub_config() { #run as root
+   # echofunction Enabling os-prober
+   # Enable os-prober
+   # grep "^GRUB_DISABLE_OS_PROBER=false" || echo "GRUB_DISABLE_OS_PROBER=false" >> /etc/default/grub
+
+   echofunction Generating GRUB config.
+   # Grub Config
+   grub-mkconfig -o /boot/grub/grub.cfg
+}
+
+# Install Grub
+install_grub() { #run as root
+   echofunction Installing GRUB Packages
+   pacman -S efibootmgr ntfs-3g dosfstools grub os-prober mtools --needed --noconfirm
+
+   echofunction Running grub-install
+   grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
+   grubconfig
+}
+
+# Install essential packages
+packages() { #run as root
+   echofunction Refreshing Keyring
+   pacman -S archlinux-keyring --noconfirm
+
+   echofunction Installing libinput
+   pacman -S xf86-input-libinput --noconfirm
+
+   echofunction Installing Pipewire as server, alsa. and pamixer pactl pulsemixer for audio control
+   pacman -S pipewire pipewire-media-session pipewire-pulse pipewire-alsa pamixer pulsemixer --needed --noconfirm   
+   # alsa-utils alsa-plugins libpulse
+
+   echofunction Installing git, bc, ffmpeg, fzf, mpd, neovim, unrar, unzip, tar, wildmidi, rsync, zsh, imagemagick
+   pacman -S bc git ffmpeg fzf mpd neovim unrar unzip tar wildmidi rsync zsh imagemagick --needed --noconfirm
+
+} 
+
+# CREATE USER
+create_user() { #run as root
+   echofunction Installing sudo
+   pacman -S sudo --noconfirm --needed
+
+   echofunction Adding User $USERNAME
+   useradd -m $USERNAME
+
+   echofunction Adding $USERNAME to groups wheel,network,audio,video,input
+   usermod -aG wheel,network,audio,video,input $USERNAME
+
+   echofunction Type Password $USERNAME
+   passwd $USERNAME
+}
+
+# ADD USER TO SUDOERS
+set_sudo() { #run as root
+   echofunction wheel group can execute anycommands.
+   grep "%wheel ALL=(ALL:ALL) ALL" /etc/sudoers >/dev/null  || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
+
+   echofunction $USERNAME to execute power commands without password
+   grep "$USERNAME" /etc/sudoers  >/dev/null || echo "$USERNAME ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend, /usr/bin/pacman -Syu" >> /etc/sudoers
+}
+
+# Install AUR.
+install_yay() { #run as user
+   echofunction Installing go, required by yay
+   sudo pacman -S go --needed --noconfirm
+
+   echofunction Downloading yay repo to $HOME/git/yay
+   mkdir -pv "$HOME/git/yay"
+   git clone --depth 1 "https://aur.archlinux.org/yay.git" "$HOME/git/yay" >/dev/null
+   cd "$HOME/git/yay"
+
+   echofunction making yay package
+   makepkg --noconfirm -si && cd
+}
+
+
+# Install Xorg Packages
+install_xorg() { #run as user
+   echofunction Installing xorg-packages
+   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-wininfo  --needed --noconfirm
+}
+
+# Install GUI Programs
+install_gui() { #run as user
+   echofunction Installing \\nBrave, \\npicom, \\nawesomeWM, \\nmpd, \\nmpc, \\nncmpcpp, \\nmpv, \\nrofi, \\npavucontrol, \\nthunar, \\nmaim, \\nbspwm, \\nsxhkd, \\nxf86-video-intel, \\nxf86-input-synaptics, \\nlxappearance, \\nkitty, \\nfeh, \\ndunst.
+
+
+   yay -S awesome-git brave-bin picom-jonaburg-git --needed --noconfirm
+   yay -S timidity++ mpc ncmpcpp --needed --noconfirm
+
+   sudo pacman -S kitty mpv feh dunst rofi pavucontrol maim thunar lxappearance xf86-video-intel xf86-input-synaptics bspwm sxhkd xf86-video-intel --needed --noconfirm
+}
+
+# Install dotfiles
+git_setup() { #run as user
+   echofunction Cloning dotfiles
+
+   git clone https://github.com/niraj998/dotfiles.git "/home/$USERNAME"
+
+   rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github"
+}
+
+
+# ARCH Installation
+fail() {
+   echo "$@ Failed " && exit 
+}
+ 
+success() {
+   echo "Successfully $@" && sleep 4
+}
+
+archinstall() {
+   # This part to run inside chroot environment after installation.
+   # if something fails uncomment parts that went successfully. and only run rest of the stuff.
+   set_time && success Set Time. || fail Setting up Time
+   set_hosts && success Set Hosts. || fail Setting up Hosts
+   set_locale && success Set Locale. || fail Generating Locale
+   create_user && success Created User $USERNAME || fail Creating User
+   set_sudo && success added $USERNAME to sudoers || fail Creating User
+   set_network && success Installed and enabled NetworkManager. || fail Setting up NetworkManager
+   installgrub && success Installed Grub. || fail Grub Install
+   packages && success Installed necessary packages || fail failed to install packages
+}
+
+# run this as a user.
+usersetup() {
+   install_yay && success Installed yay || fail installing yay
+   install_xorg && success Installed xorg || fail installing xorg
+   install_gui && success Installed GUI Programs || fail installing GUI Programs
+   git_setup
+}
+
+# what's this intended to do.
+
+# start arch from bootable media.
+# connect to internet.
+# run "set_mirrors" function to refresh mirrors.
+# partition & mount drives.
+# run pacstrap command. with base, base-devel, linux, linux-firmware.
+# run "set_fstab" function
+# chroot into installed system
+# add root password (Important)
+# add arch repos to artix, pacman -S artix-archlinux-support and follow instructions. some of the packages from packages list are not in artix repo.
+# run "archinstall" function
+# reboot 
+# login as user
+# run "usersetup" function
+# Finish.
+
+"$@"
