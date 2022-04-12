@@ -65,44 +65,37 @@ set_fstab() { #run as root
  if [ "$NAME" = "Artix Linux" ]; then
    # At time of Installation, (from bootable device.)
    fstabgen -U /mnt > /mnt/etc/fstab
-
    # mount drive on startup with user previlage, replace UUID with your own.
    echofunction Adding media entry to fstab.
    [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
 
    # After installation. (you need install scripts package. for this) 
    # fstabgen -U / > /etc/fstab
-
    # mount drive on startup with user previlage, replace UUID with your own if you want.
    # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
-
  else
    # At time of Installation, (from bootable device.)
    genfstab -U /mnt > /mnt/etc/fstab
-
    # mount drive on startup with user previlage, replace UUID with your own.
    echofunction Adding media entry to fstab.
    [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
 
    # After installation. (you need install scripts package. for this)
    # genfstab -U / > /etc/fstab
-
    # mount drive on startup with user previlage, replace UUID with your own if you want.
    # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
-
  fi
 }
 
 # SETUP LOCALE
 set_locale() { #run as root
    echofunction Settingup Locale.
+
    echofunction Adding $LOCALE to locale.gen
    grep "^${LOCALE%% *}" /etc/locale.gen >/dev/null || echo "$LOCALE" >> /etc/locale.gen
-
-   # create locale.conf file.
-   [ -f "/etc/locale.conf" ] || touch /etc/locale.conf
-
+   
    echofunction Adding LANG=${LOCALE%% *} to locale.conf
+   [ -f "/etc/locale.conf" ] || touch /etc/locale.conf
    grep "^LANG=${LOCALE%% *}" /etc/locale.conf >/dev/null || echo "LANG=${LOCALE%% *}" > /etc/locale.conf
 
    echofunction Adding LC_ALL=${LOCALE%% *} to /etc/environment
@@ -220,7 +213,7 @@ packages() { #run as root
    pacman -S archlinux-keyring --noconfirm
 
    echofunction Installing libinput
-   pacman -S xf86-input-libinput --noconfirm
+   pacman -S xf86-input-libinput --needed --noconfirm
 
    echofunction Installing Pipewire as server, alsa. and pamixer pactl pulsemixer for audio control
    pacman -S pipewire pipewire-media-session pipewire-pulse pipewire-alsa pamixer pulsemixer --needed --noconfirm   
@@ -273,18 +266,17 @@ install_yay() { #run as user
 # Install Xorg Packages
 install_xorg() { #run as user
    echofunction Installing xorg-packages
-   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-wininfo  --needed --noconfirm
+   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-xwininfo xf86-video-intel xf86-input-synaptics  --needed --noconfirm
 }
 
 # Install GUI Programs
 install_gui() { #run as user
-   echofunction Installing \\nBrave, \\npicom, \\nawesomeWM, \\nmpd, \\nmpc, \\nncmpcpp, \\nmpv, \\nrofi, \\npavucontrol, \\nthunar, \\nmaim, \\nbspwm, \\nsxhkd, \\nxf86-video-intel, \\nxf86-input-synaptics, \\nlxappearance, \\nkitty, \\nfeh, \\ndunst.
-
+   echofunction Installing \\nBrave:   Browser, \\npicom:   Compositor, \\nawesomeWM:   WindowManager, \\nmpd:   Music, \\nmpc:   Music controller, \\nncmpcpp:   Music Player, \\nmpv:   Video player, \\nrofi:   Run, \\npavucontrol:   Volume Control, \\nthunar:   File Browser, \\nmaim:   Screenshot, \\nbspwm:   Window Manager, \\nsxhkd:   Keybind, \\nlxappearance:   Theme Selector, \\nkitty:   Terminal, \\nfeh:   Image Viewer, \\ndunst:   Notification Daemon.
 
    yay -S awesome-git brave-bin picom-jonaburg-git --needed --noconfirm
    yay -S timidity++ mpc ncmpcpp --needed --noconfirm
 
-   sudo pacman -S kitty mpv feh dunst rofi pavucontrol maim thunar lxappearance xf86-video-intel xf86-input-synaptics bspwm sxhkd xf86-video-intel --needed --noconfirm
+   sudo pacman -S kitty mpv feh dunst rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
 }
 
 # Install dotfiles
@@ -303,7 +295,7 @@ fail() {
 }
  
 success() {
-   echo "Successfully $@" && sleep 4
+   echo "Successfully $@" && sleep 2
 }
 
 archinstall() {
@@ -315,7 +307,8 @@ archinstall() {
    create_user && success Created User $USERNAME || fail Creating User
    set_sudo && success added $USERNAME to sudoers || fail Creating User
    set_network && success Installed and enabled NetworkManager. || fail Setting up NetworkManager
-   installgrub && success Installed Grub. || fail Grub Install
+   install_grub && success Installed Grub. || fail Grub Install
+   [ "$NAME" = "Artix Linux" ] && exit
    packages && success Installed necessary packages || fail failed to install packages
 }
 
@@ -324,7 +317,7 @@ usersetup() {
    install_yay && success Installed yay || fail installing yay
    install_xorg && success Installed xorg || fail installing xorg
    install_gui && success Installed GUI Programs || fail installing GUI Programs
-   git_setup
+#   git_setup
 }
 
 # what's this intended to do.
