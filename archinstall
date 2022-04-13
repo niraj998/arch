@@ -295,12 +295,18 @@ install_gui() { #run as user
 
 # Install dotfiles
 git_setup() { #run as user
-   comments "Cloning dotfiles to $HOME directory"
+   cd
+   comments "Cloning dotfiles"
    mkdir -pv /home/$USERNAME/git/dotfiles
    git clone https://github.com/niraj998/dotfiles.git "/home/$USERNAME/git/dotfiles"
    cp -rf /home/$USERNAME/git/dotfiles/.* /home/$USERNAME
    rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github"
-
+   mkdir -pv /home/$USERNAME/git/awesome
+   git clone https://github.com/niraj998/awesome.git "/home/$USERNAME/git/awesome"
+   cp -r /home/$USERNAME/git/awesome/config/awesome /home/$USERNAME/.config
+   cp -r /home/$USERNAME/git/awesome/config/fonts /home/$USERNAME/.local/share/fonts
+   fc-cache -fv
+   [ -f "/home/niraj/.config/shell/profile" ] && rm .bash_profile && ln -s .config/shell/profile .bash_profile
 }
 
 
