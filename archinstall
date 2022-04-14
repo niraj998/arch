@@ -231,7 +231,7 @@ install_grub() { #run as root
 packages() { #run as root
   if [ "$NAME" = "Artix Linux" ]; then
    comments "Refreshing Keyring"
-   pacman -S artixlinux-keyring --noconfirm
+   pacman -S artix-keyring --noconfirm
   else
    comments "Refreshing Keyring"
    pacman -S archlinux-keyring --noconfirm
@@ -295,7 +295,7 @@ install_xorg() { #run as user
 # Install GUI Programs
 install_gui() { #run as user
    comments "Installing \nBrave:   Browser, \npicom:   Compositor, \nawesomeWM:   WindowManager, \nmpd:   Music, \nmpc:   Music controller, \nncmpcpp:   Music Player, \nmpv:   Video player, \nrofi:   Run, \npavucontrol:   Volume Control, \nthunar:   File Browser, \nmaim:   Screenshot, \nbspwm:   Window Manager, \nsxhkd:   Keybind, \nlxappearance:   Theme Selector, \nkitty:   Terminal, \nfeh:   Image Viewer, \ndunst:   Notification Daemon."
-   yay -S awesome-git brave-bin picom-jonaburg-git timidity++ mpc ncmpcpp lf-git --needed --noconfirm
+   yay -S awesome-git brave-bin picom-jonaburg-git timidity++ mpc ncmpcpp lf-git eww-git dashbinsh --needed --noconfirm
    sudo pacman -S kitty mpv feh dunst ueberzug rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
 }
 
@@ -337,6 +337,25 @@ archinstall() { #run as root/chroot.
    comments "Everything seems to went Successfully, don't forget to set root password before rebooting"
    passwd
 }
+
+archrepo() {
+pacman -S artix-archlinux-support || return
+
+echo "
+# Archlinux repos.
+[extra]
+Include = /etc/pacman.d/mirrorlist-arch
+
+[community]
+Include = /etc/pacman.d/mirrorlist-arch
+
+" >> pacman.conf
+
+pacman-key --populate archlinux
+
+}
+
+
 
 extrapackages() {
 [ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. \nadd archlinux repo support, cancel script now, try again later.\nor press [Enter] to go ahead."  && read -r check
