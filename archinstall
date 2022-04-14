@@ -304,6 +304,7 @@ git_setup() { #run as user
    cd
    comments "Cloning dotfiles"
    mkdir -pv /home/$USERNAME/git/dotfiles
+   rm /home/$USERNAME/.bashrc
    git clone https://github.com/niraj998/dotfiles.git "/home/$USERNAME/git/dotfiles"
    cp -rf /home/$USERNAME/git/dotfiles/.* /home/$USERNAME
    rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github" "/home/$USERNAME/etc"
