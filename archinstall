@@ -3,8 +3,14 @@
 # author Niraj
 # Git    niraj998
 
+## --------- config -----------------------------------
+. /etc/os-release
+LOCALE="en_IN.UTF-8 UTF-8"
+HOSTNAME="$ID"
+USERNAME="niraj"
+TIMEZONE="Asia/Kolkata"
 
-# What is this
+## --------- help -------------------------------------
 if [ -z $1 ]; then
 cat <<- EOF
 archinstall
@@ -38,24 +44,20 @@ EOF
 exit
 fi
 
-. /etc/os-release
-LOCALE="en_IN.UTF-8 UTF-8"
-HOSTNAME="$ID"
-USERNAME="niraj"
-TIMEZONE="Asia/Kolkata"
-
-# loadkeys 
-# loadkeys us   #only in console
-
 comments() { 
-    # this serves two purpose, 1st as a documentation for script and 
-    # echo everything outside to see what script is doing.
+    # this serves two purpose, 1st as a documentation for script and second
+    # echo all the arguments to track what script is doing.
     echo "$@" && sleep 1
 }
 
-# REFRESH MIRRORS
+
+## --------- keymaps -------------------------------------
+# loadkeys us
+
+## --------- mirrors -------------------------------------
 set_mirrors() { #run as root
    # This function uses reflector to refresh arch mirrors.
+
    comments "Installing reflector."
    pacman -S reflector --noconfirm --needed
 
@@ -63,66 +65,86 @@ set_mirrors() { #run as root
    reflector -c India,US,Germany -p https,http --sort rate --save /etc/pacman.d/mirrorlist
 }
 
-# SETUP FSTAB
-set_fstab() { #run as root
-  
+## --------- fstab --------------------------------------
+set_fstab() { #run from liveiso
+
    # This Function Generates fstab
    comments "Generating fstab"
 
-   # Artix linux has fstabgen command and arch has genfstab command
-   # this if statement chooses commads based on distribution. 
-   # $NAME is comming from /etc/os-release file.
-
  if [ "$NAME" = "Artix Linux" ]; then
-   [ $(command -v fstabgen) ] || comments "fstabgen command does not exist, \nThis command is supposed to tun from liveiso \nIf you are in chroot environment quit and go back to liveiso. \nIf you want to set fstab from your current system then. \nInstall artix-install-scripts package, go to this script and check fstab function" 
-   [ $(command -v fstabgen) ] || exit
 
-   # run this at the time of Installation, (from bootable device.)
-   fstabgen -U /mnt > /mnt/etc/fstab
+    ##-- at the time of fresh Installation. --##
 
-   # mount drive on startup with user previlage, replace UUID with your own.
-   # comments Adding media entry to fstab.
-   # [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
+    # Artix Linux uses fstabgen to generate fstab.
+    [ $(command -v fstabgen) ] || comments "  command 'fstabgen' does not exist,
+  This command is supposed to run from liveiso 
+  If you are in chroot environment quit and go back to liveiso and try again.
+  If you want to set fstab for and from your current system then. 
+  Install artix-install-scripts package, go to this script and check fstab function"
 
-   # if you want to regenerate fstab for your current system.
-   # You will require artix-install-scripts package.
-   # and comment out lines having /mnt above and uncomment all lines with / below
+    # exit script if fstabgen command doesn't exist.
+    [ $(command -v fstabgen) ] || exit
 
+    # You're supposed to run this command from liveiso after basestrap command.
+    fstabgen -U /mnt > /mnt/etc/fstab
+
+    # mount drive on startup with user previlage. replace UUID with your own.
+    # comments "Adding media entry to fstab."
+    # [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
+
+   ##-- re-generating for current system (after Installation) --##
+
+   # commentout above fstabcommand. and uncomment the this one.
    # fstabgen -U / > /etc/fstab  
 
    # mount drive on startup with user previlage, replace UUID with your own.
-   # comments Adding media entry to fstab.
+   # comments "Adding media entry to fstab."
    # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
 
  else
-   [ $(command -v genfstab) ] || comments "genfstab command does not exist, \nThis command is supposed to tun from liveiso \nIf you are in chroot environment quit and go back to liveiso. \nIf you want to set fstab from your current system then. \nInstall arch-install-scripts package, go to this script and check fstab function" 
+   ##-- at the time of fresh Installation. --##
+
+   # Arch Linux uses fstabgen to generate fstab.
+   [ $(command -v genfstab) ] || comments "  command 'genfstab' does not exist,
+  This command is supposed to tun from liveiso 
+  If you are in chroot environment quit and go back to liveiso and try again.
+  If you want to set fstab for and from your current system then. 
+  Install arch-install-scripts package, go to this script and check fstab function"
+
+   # exit script if genfstab command doesn't exist.
    [ $(command -v genfstab) ] || exit
 
    # At time of Installation, (from bootable device.)
    genfstab -U /mnt > /mnt/etc/fstab
    # mount drive on startup with user previlage, replace UUID with your own.
-   comments "Adding media entry to fstab."
-   [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
+   # comments "Adding media entry to fstab."
+   # [ -d /mnt/media ] || mkdir /mnt/media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /mnt/etc/fstab
 
-   # After installation. (you need install scripts package. for this)
+   ##-- re-generating for current system (after Installation) --##
+
+   # commentout above fstabcommand. and uncomment the this one.
    # genfstab -U / > /etc/fstab
+
    # mount drive on startup with user previlage, replace UUID with your own if you want.
-   # comments Adding media entry to fstab.
+   # comments "Adding media entry to fstab."
    # [ -d /media ] || mkdir /media && echo "UUID=DC9C095A9C093096  /media  auto  rw,auto,user,fmask=133,uid=1000,gid=1000,umask=022  0  0" >> /etc/fstab
  fi
 }
 
-# SETUP LOCALE
+## --------- locale --------------------------------------
 set_locale() { #run as root
    comments "Settingup locale."
-
+   
+   # example, add line 'en_IN.UTF-8 UTF-8' to /etc/locale.gen file
    comments "Adding $LOCALE to locale.gen"
    grep "^${LOCALE%% *}" /etc/locale.gen >/dev/null || echo "$LOCALE" >> /etc/locale.gen
    
+   # example, add line 'LANG=en_IN.UTF-8' to /etc/locale.conf file
    comments "Adding LANG=${LOCALE%% *} to locale.conf"
    [ -f "/etc/locale.conf" ] || touch /etc/locale.conf
    grep "^LANG=${LOCALE%% *}" /etc/locale.conf >/dev/null || echo "LANG=${LOCALE%% *}" > /etc/locale.conf
 
+   # example, add line 'LC_ALL=en_IN.UTF-8' to /etc/environment file
    comments "Adding LC_ALL=${LOCALE%% *} to /etc/environment"
    grep "^LC_ALL=${LOCALE%% *}" /etc/environment >/dev/null || echo "LC_ALL=${LOCALE%% *}" >> /etc/environment
 
@@ -130,14 +152,15 @@ set_locale() { #run as root
    locale-gen
 }
 
-# SETUP HOSTS
+## --------- hosts --------------------------------------
 set_hosts() { #run as root
    comments "Adding host $HOSTNAME to /etc/hostname and /etc/hosts"
+
    # set hostname
    [ -f "/etc/hostname" ]  ||  touch /etc/hostname
    grep "$HOSTNAME" /etc/hostname  >/dev/null || echo $HOSTNAME > /etc/hostname
 
-   # stop if hosts already set 
+   # stop adding hostname to hosts if already set.
    grep "$HOSTNAME.localdomain" /etc/hosts >/dev/null && return
 
    # echo hostname in hosts.
@@ -148,8 +171,7 @@ echo "
 " >> /etc/hosts
 }
 
-
-# SET TIME
+## --------- time --------------------------------------
 set_time() { #run as root
    comments "Setting up time"
    if [ "$NAME" = "Artix Linux" ]; then
@@ -173,26 +195,37 @@ set_time() { #run as root
    fi
 }
 
-
-# SETUP NETWORK
+## --------- NetworkManager, Bluetooth ------------------------------
 set_network() { #run as root
+
    comments "Settingup NetworkManager and Bluetooth"
+
  if [ "$NAME" = "Artix Linux" ]; then
+   # Change commands here if you're not installing runit.
+
+   ## ------- Network Manager -------- ##
+
    comments "Installing NetworkManager Packages"
    pacman -Sy networkmanager networkmanager-runit wpa_supplicant-runit wpa_supplicant dhcpcd dhcpcd-runit --noconfirm --needed
 
    comments "Enabling NetworkManager services"
    ln -s /etc/runit/sv/NetworkManager  /etc/runit/runsvdir/current
-#    ln -s /etc/runit/sv/NetworkManager /run/runit/service
+   # ln -s /etc/runit/sv/NetworkManager /run/runit/service
 
-   comments "Installing Bluetooth"
-   pacman -Syu bluez bluez-runit bluez-utils --needed --noconfirm
+   ## ------- Bluetooth --------- ##
 
-   comments "Enabling Bluetooth Service"
-   ln -s /etc/runit/sv/bluetoothd  /etc/runit/runsvdir/current
-#    ln -s /etc/runit/sv/bluetoothd /run/runit/service
+   # comments "Installing Bluetooth"
+   # pacman -Syu bluez bluez-runit bluez-utils --needed --noconfirm
+
+   # comments "Enabling Bluetooth Service"
+   # ln -s /etc/runit/sv/bluetoothd  /etc/runit/runsvdir/current
+   # ln -s /etc/runit/sv/bluetoothd /run/runit/service
 
  else
+   # archlinux systemd
+
+   ## ------- Network Manager -------- ##
+
    comments "Installing NetworkManager Packages"
    pacman -Syu networkmanager dhcpcd --needed --noconfirm
 
@@ -200,37 +233,46 @@ set_network() { #run as root
    systemctl enable NetworkManager
    # systemctl start NetworkManager
 
-   comments "Installing Bluetooth"
-   pacman -Syu bluez bluez-utils --needed --noconfirm
+   ## ------- Bluetooth --------- ##
+   # comments "Installing Bluetooth"
+   # pacman -Syu bluez bluez-utils --needed --noconfirm
 
-   comments "Enabling Bluetooth Service"
-   systemctl enable bluetooth
+   # comments "Enabling Bluetooth Service"
+   # systemctl enable bluetooth
    # systemctl start bluetooth
  fi
 }
 
-# GRUB
+## --------- GRUB Config ------------------------------
 grub_config() { #run as root
+
    # comments Enabling os-prober
    # grep "^GRUB_DISABLE_OS_PROBER=false" || echo "GRUB_DISABLE_OS_PROBER=false" >> /etc/default/grub
+
    comments "Generating GRUB config."
    grub-mkconfig -o /boot/grub/grub.cfg
 }
 
-# Install Grub
+## --------- GRUB Install ------------------------------
 install_grub() { #run as root
-#   comments "Installing GRUB Packages"
+
+   comments "Installing GRUB and it's dependencies."
    pacman -S ntfs-3g dosfstools grub os-prober mtools --needed --noconfirm
-   if [ -z "$(ls /sys/firmware/efi)" ]; then
+
+   # I don't have legacy system.
+  if [ -z "$(ls /sys/firmware/efi)" ]; then
    comments "\033[1;031mYou Don't have EFI System, PLEASE INSTALL & CONFIG GRUB manually, and add root password\033[00m" && exit
-   fi
+  fi
    pacman -S efibootmgr --needed --noconfirm
+
+   # Change this command if you're installing on legacy system.
    comments "Running grub-install"
    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
+   # Generate GRUB config.
    grub_config
 }
 
-# Install essential packages
+## --------- Install Packages ------------------------------
 packages() { #run as root
   if [ "$NAME" = "Artix Linux" ]; then
    comments "Refreshing Keyring"
@@ -240,69 +282,79 @@ packages() { #run as root
    pacman -S archlinux-keyring --noconfirm
   fi
 
-   comments "Installing Pipewire as server, alsa. and pamixer pactl pulsemixer to control audio"
+   # Install audio.
+   comments "Installing Pipewire. (and pamixer, pactl, pulsemixer, to control audio)"
    pacman -S pipewire pipewire-media-session pipewire-pulse pipewire-alsa pamixer libpulse pulsemixer --needed --noconfirm
    # alsa-utils alsa-plugins libpulse
 
+   # Install essential packages.
    comments Installing git, bc, ffmpeg, fzf, mpd, neovim, unrar, unzip, tar, wildmidi, rsync, zsh, imagemagick
-   pacman -S bc git ffmpeg fzf mpd neovim unrar unzip tar wildmidi rsync zsh imagemagick --needed --noconfirm
+   pacman -S bc git ffmpeg fzf mpd neovim unrar unzip tar rsync zsh imagemagick --needed --noconfirm
 } 
 
-# CREATE USER
+## --------- Create User ------------------------------
 create_user() { #run as root
-   grep "$USERNAME" /etc/passwd >/dev/null && comments User $USERNAME already exists, skipping user creation && return
+   grep "$USERNAME" /etc/passwd >/dev/null && comments "User $USERNAME already exists, skipping user creation" && return
    
-   comments Installing sudo
+   comments "Installing sudo"
    pacman -S sudo --noconfirm --needed
 
-   comments Adding User $USERNAME
+   comments "Adding User $USERNAME"
    useradd -m $USERNAME
 
-   comments Adding $USERNAME to groups wheel,network,audio,video,input
+   comments "Adding $USERNAME to groups wheel,network,audio,video,input"
    usermod -aG wheel,network,audio,video,input $USERNAME
 
-   comments Type Password $USERNAME
+   comments "Type Password $USERNAME"
    passwd $USERNAME
 }
 
-# ADD USER TO SUDOERS
+## --------- sudoers ------------------------------
 set_sudo() { #run as root
-   comments wheel group can execute anycommands.
+   comments "wheel group can execute anycommands."
    grep "^%wheel ALL=(ALL:ALL) ALL" /etc/sudoers >/dev/null  || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
-   comments $USERNAME to execute power commands without password
+   comments "$USERNAME can execute power commands without password"
    grep "$USERNAME" /etc/sudoers  >/dev/null || echo "$USERNAME ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend, /usr/bin/pacman -Syu" >> /etc/sudoers
 }
 
-# Install AUR.
+## --------- Install yay ------------------------------
 install_yay() { #run as user
+
    comments "Installing go, (required by yay)"
    sudo pacman -S go --needed --noconfirm
 
-   comments "Downloading yay repo to /home/$USERNAME/git/yay directory"
+   comments "Cloning yay repo to /home/$USERNAME/git/yay directory"
    mkdir -pv "/home/$USERNAME/git/yay"
    git clone --depth 1 "https://aur.archlinux.org/yay.git" "/home/$USERNAME/git/yay" >/dev/null
    cd "/home/$USERNAME/git/yay"
 
-   comments "making yay package"
+   comments "makepkg yay"
    makepkg --noconfirm -si && cd /home/$USERNAME
 }
 
 
-# Install Xorg Packages
+## --------- Install xorg ------------------------------
 install_xorg() { #run as user
+
    comments "Installing xorg-packages"
-   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-xwininfo xf86-video-intel xf86-input-synaptics xf86-input-libinput  xorg-xsetroot --needed --noconfirm
+   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-xwininfo xorg-xsetroot --needed --noconfirm
+
+   # Intel / driver specific packages.
+   sudo pacman -S xf86-input-synaptics xorg-xbacklight xf86-video-intel xf86-input-libinput --needed --noconfirm
 }
 
-# Install GUI Programs
+## --------- Install GUI ------------------------------
 install_gui() { #run as user
-   comments "Installing \nBrave:   Browser, \npicom:   Compositor, \nawesomeWM:   WindowManager, \nmpd:   Music, \nmpc:   Music controller, \nncmpcpp:   Music Player, \nmpv:   Video player, \nrofi:   Run, \npavucontrol:   Volume Control, \nthunar:   File Browser, \nmaim:   Screenshot, \nbspwm:   Window Manager, \nsxhkd:   Keybind, \nlxappearance:   Theme Selector, \nkitty:   Terminal, \nfeh:   Image Viewer, \ndunst:   Notification Daemon."
+
+   comments "Installing Brave, picom, awesomeWM, mpc, ncmpcpp, mpv, rofi, pavucontrol, thunar, maim, bspwm, sxhkd,lxappearance, kitty, feh, dunst, eww, blueberry."
+
    yay -S awesome-git brave-bin picom-jonaburg-git timidity++ mpc ncmpcpp lf-git eww-git dashbinsh --needed --noconfirm
-   sudo pacman -S kitty mpv feh dunst ueberzug rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
+
+   sudo pacman -S kitty mpv wildmidi feh dunst ueberzug rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
 }
 
-# Install dotfiles
+## --------- Copy dotfiles. ------------------------------
 git_setup() { #run as user
    cd
    comments "Cloning dotfiles"
@@ -320,8 +372,7 @@ git_setup() { #run as user
    [ -f "/home/niraj/.config/shell/profile" ] && rm .bash_profile && ln -s .config/shell/profile .bash_profile
 }
 
-
-# ARCH Installation
+## --------- Arch Installation ---------------------------------
 fail() {
    echo "$@ Failed " && exit 
 }
@@ -330,7 +381,7 @@ success() {
    echo "Successfully $@" && sleep 2
 }
 
-archinstall() { #run as root/chroot.
+freshinstall() { #run from chroot.
    set_time && success "Set Time." || fail "Setting up Time"
    set_hosts && success "Set Hosts." || fail "Setting up Hosts"
    set_locale && success "Set Locale." || fail "Generating Locale"
@@ -342,8 +393,10 @@ archinstall() { #run as root/chroot.
    passwd
 }
 
+## ------------ Add archrepos ----------------------
 archrepo() {
-pacman -S artix-archlinux-support || return
+   # Add archlinux repo to artix.
+   pacman -S artix-archlinux-support || return
 
 echo "
 # Archlinux repos.
@@ -355,42 +408,40 @@ Include = /etc/pacman.d/mirrorlist-arch
 
 " >> pacman.conf
 
-pacman-key --populate archlinux
-
+   pacman-key --populate archlinux
 }
 
-
-
+## ----------- Install packages ------------------
 extrapackages() {
 [ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. \nadd archlinux repo support, cancel script now, try again later.\nor press [Enter] to go ahead."  && read -r check
 packages && success "Installed necessary packages" || fail "Install packages"
 }
 
+## ------------ User Specific and GUI ---------------
 usersetup() { # run this as a user.
-   install_yay && success Installed yay || fail installing yay
-   install_xorg && success Installed xorg || fail installing xorg
-   install_gui && success Installed GUI Programs || fail installing GUI Programs
+   install_yay && success "Installed yay" || fail "installing yay"
+   install_xorg && success "Installed xorg" || fail "installing xorg"
+   install_gui && success "Installed GUI Programs" || fail "installing GUI Programs"
    git_setup
 }
 
 
+## ----------------------------------------------------
 
-# from start to end.
+#  start arch from bootable media.
+#  connect to internet.
+#  get this script.
+#  run "set_mirrors" function to refresh mirrors.
+#  partition & mount drives.
+#  run pacstrap command.
+#  run "set_fstab" function
+#  chroot into installed system
+#  run "archinstall" function
+#  reboot 
+#  login as user
+#  run "usersetup" function
+#  Finish.
 
-# start arch from bootable media.
-# connect to internet.
-# get this script.
-# run "set_mirrors" function to refresh mirrors.
-# partition & mount drives.
-# run pacstrap command.
-# run "set_fstab" function
-# chroot into installed system
-# run "archinstall" function
-# reboot 
-# login as user
-# run "usersetup" function
-# Finish.
+## ----------------------------------------------------
 
-
-# "$@"
 "$@" 2>errors
