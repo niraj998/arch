@@ -219,9 +219,12 @@ grub_config() { #run as root
 
 # Install Grub
 install_grub() { #run as root
-   comments "Installing GRUB Packages"
-   pacman -S efibootmgr ntfs-3g dosfstools grub os-prober mtools --needed --noconfirm
-
+#   comments "Installing GRUB Packages"
+   pacman -S ntfs-3g dosfstools grub os-prober mtools --needed --noconfirm
+   if [ -z "$(ls /sys/firmware/efi)" ]; then
+   comments "\033[1;031mYou Don't have EFI System, PLEASE INSTALL & CONFIG GRUB manually, and add root password\033[00m" && exit
+   fi
+   pacman -S efibootmgr --needed --noconfirm
    comments "Running grub-install"
    grub-install --target=x86_64-efi --efi-directory=/boot --bootloader-id=grub
    grub_config
