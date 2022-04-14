@@ -276,13 +276,13 @@ install_yay() { #run as user
    comments "Installing go, (required by yay)"
    sudo pacman -S go --needed --noconfirm
 
-   comments "Downloading yay repo to $HOME/git/yay directory"
-   mkdir -pv "$HOME/git/yay"
-   git clone --depth 1 "https://aur.archlinux.org/yay.git" "$HOME/git/yay" >/dev/null
-   cd "$HOME/git/yay"
+   comments "Downloading yay repo to /home/$USERNAME/git/yay directory"
+   mkdir -pv "/home/$USERNAME/git/yay"
+   git clone --depth 1 "https://aur.archlinux.org/yay.git" "/home/$USERNAME/git/yay" >/dev/null
+   cd "/home/$USERNAME/git/yay"
 
    comments "making yay package"
-   makepkg --noconfirm -si && cd
+   makepkg --noconfirm -si && cd /home/$USERNAME
 }
 
 
@@ -311,7 +311,7 @@ git_setup() { #run as user
    mkdir -pv /home/$USERNAME/git/awesome
    git clone https://github.com/niraj998/awesome.git "/home/$USERNAME/git/awesome"
    cp -r /home/$USERNAME/git/awesome/config/awesome /home/$USERNAME/.config
-   cp -r /home/$USERNAME/git/awesome/config/fonts /home/$USERNAME/.local/share/fonts
+   cp -r /home/$USERNAME/git/awesome/fonts /home/$USERNAME/.local/share/fonts
    fc-cache -fv
    [ -f "/home/niraj/.config/shell/profile" ] && rm .bash_profile && ln -s .config/shell/profile .bash_profile
 }
@@ -339,7 +339,7 @@ archinstall() { #run as root/chroot.
 }
 
 extrapackages() {
-[ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. add archlinux repo support, cancel script now, try again later. or press [Enter] to go ahead."  && read -r check
+[ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. \nadd archlinux repo support, cancel script now, try again later.\nor press [Enter] to go ahead."  && read -r check
 packages && success "Installed necessary packages" || fail "Install packages"
 }
 
@@ -369,5 +369,5 @@ usersetup() { # run this as a user.
 # Finish.
 
 
-"$@"
-# "$@" 2>errors
+# "$@"
+"$@" 2>errors
