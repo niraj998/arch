@@ -310,6 +310,7 @@ git_setup() { #run as user
    rm /home/$USERNAME/.bashrc
    git clone https://github.com/niraj998/dotfiles.git "/home/$USERNAME/git/dotfiles"
    cp -rf /home/$USERNAME/git/dotfiles/.* /home/$USERNAME
+   sudo cp -rf /home/$USERNAME/git/dotfiles/etc/X11/* /etc/X11/
    rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github" "/home/$USERNAME/etc"
    mkdir -pv /home/$USERNAME/git/awesome
    git clone https://github.com/niraj998/awesome.git "/home/$USERNAME/git/awesome"
