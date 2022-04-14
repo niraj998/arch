@@ -7,11 +7,13 @@
 # What is this
 if [ -z $1 ]; then
 cat <<- EOF
-startup 
-   This script just helps with arch installation, It has all the commands to install and setup archlinux. you can also run individual functions at any point after installation for resetting something.
-   Before running script, look through script and customize commands according to your system.
+archinstall
+   This script just helps with arch installation, It has all the commands to install and
+   setup archlinux. you can also run individual functions at any point after installation
+   for resetting something. Before running script, look through script and customize commands
+   according to your system.
 
-startup [function]
+archinstall [function]
 
   functions: (run from bootable media)
     set_mirrors,   Refresh mirrors with reflector.
@@ -38,7 +40,7 @@ fi
 
 . /etc/os-release
 LOCALE="en_IN.UTF-8 UTF-8"
-HOSTNAME="arch"
+HOSTNAME="$ID"
 USERNAME="niraj"
 TIMEZONE="Asia/Kolkata"
 
@@ -227,9 +229,13 @@ install_grub() { #run as root
 
 # Install essential packages
 packages() { #run as root
+  if [ "$NAME" = "Artix Linux" ]; then
+   comments "Refreshing Keyring"
+   pacman -S artixlinux-keyring --noconfirm
+  else
    comments "Refreshing Keyring"
    pacman -S archlinux-keyring --noconfirm
-
+  fi
 
    comments "Installing Pipewire as server, alsa. and pamixer pactl pulsemixer to control audio"
    pacman -S pipewire pipewire-media-session pipewire-pulse pipewire-alsa pamixer libpulse pulsemixer --needed --noconfirm
@@ -300,7 +306,7 @@ git_setup() { #run as user
    mkdir -pv /home/$USERNAME/git/dotfiles
    git clone https://github.com/niraj998/dotfiles.git "/home/$USERNAME/git/dotfiles"
    cp -rf /home/$USERNAME/git/dotfiles/.* /home/$USERNAME
-   rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github"
+   rm -rf "/home/$USERNAME/README.md" "/home/$USERNAME/LICENSE" "/home/$USERNAME/.git" "/home/$USERNAME/.github" "/home/$USERNAME/etc"
    mkdir -pv /home/$USERNAME/git/awesome
    git clone https://github.com/niraj998/awesome.git "/home/$USERNAME/git/awesome"
    cp -r /home/$USERNAME/git/awesome/config/awesome /home/$USERNAME/.config
@@ -327,10 +333,13 @@ archinstall() { #run as root/chroot.
    set_sudo && success "added $USERNAME to sudoers" || fail "Setting sudo"
    set_network && success "Installed and enabled NetworkManager." || fail "Setting up NetworkManager"
    install_grub && success "Installed Grub." || fail "Grub Install"
-   [ "$NAME" = "Artix Linux" ] && exit
-   packages && success "Installed necessary packages" || fail "Install packages"
    comments "Everything seems to went Successfully, don't forget to set root password before rebooting"
    passwd
+}
+
+extrapackages() {
+[ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. add archlinux repo support, cancel script now, try again later. or press [Enter] to go ahead."  && read -r check
+packages && success "Installed necessary packages" || fail "Install packages"
 }
 
 usersetup() { # run this as a user.
