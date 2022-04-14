@@ -289,7 +289,7 @@ install_yay() { #run as user
 # Install Xorg Packages
 install_xorg() { #run as user
    comments "Installing xorg-packages"
-   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-xwininfo xf86-video-intel xf86-input-synaptics xf86-input-libinput --needed --noconfirm
+   sudo pacman -S xorg-fonts-encodings xorg-server xorg-server-common xorg-setxkbmap xorg-util-macros xorg-xauth xorg-xbacklight xorg-xdpyinfo xorg-xinit xorg-xkbcomp xorg-xmessage xorg-xmodmap xorg-xprop xorg-xrandr xorg-xrdb xorg-xset xorgproto xclip xorg-xwininfo xf86-video-intel xf86-input-synaptics xf86-input-libinput  xorg-xsetroot --needed --noconfirm
 }
 
 # Install GUI Programs
