@@ -265,7 +265,7 @@ create_user() { #run as root
 # ADD USER TO SUDOERS
 set_sudo() { #run as root
    comments wheel group can execute anycommands.
-   grep "%wheel ALL=(ALL:ALL) ALL" /etc/sudoers >/dev/null  || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
+   grep "^%wheel ALL=(ALL:ALL) ALL" /etc/sudoers >/dev/null  || echo "%wheel ALL=(ALL:ALL) ALL" >> /etc/sudoers
 
    comments $USERNAME to execute power commands without password
    grep "$USERNAME" /etc/sudoers  >/dev/null || echo "$USERNAME ALL=(ALL) NOPASSWD: /usr/bin/shutdown,/usr/bin/reboot,/usr/bin/systemctl suspend, /usr/bin/pacman -Syu" >> /etc/sudoers
