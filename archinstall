@@ -3,23 +3,16 @@
 # author Niraj
 # Git    niraj998
 
-## --------- config -----------------------------------
-. /etc/os-release
-LOCALE="en_IN.UTF-8 UTF-8"
-HOSTNAME="$ID"
-USERNAME="niraj"
-TIMEZONE="Asia/Kolkata"
-
 ## --------- help -------------------------------------
 if [ -z $1 ]; then
 cat <<- EOF
-archinstall
+arch
    This script just helps with arch installation, It has all the commands to install and
    setup archlinux. you can also run individual functions at any point after installation
    for resetting something. Before running script, look through script and customize commands
    according to your system.
 
-archinstall [function]
+arch [function]
 
   functions: (run from bootable media)
     set_mirrors,   Refresh mirrors with reflector.
@@ -44,20 +37,29 @@ EOF
 exit
 fi
 
+## --------- config -----------------------------------
+. /etc/os-release
+LOCALE="en_IN.UTF-8 UTF-8"  #Keep it in this format only, check locale.gen file for reference.
+HOSTNAME="$ID"   #ID is name of distribution in lowercase i.e. arch,artix,...
+USERNAME="niraj" #username
+TIMEZONE="Asia/Kolkata"  #Keep it in this format only.
+
+
+## -------------------------------------------------------
 comments() { 
-    # this serves two purpose, 1st as a documentation for script and second
-    # echo all the arguments to track what script is doing.
+    # This Function echos all of it's arguments.
+
     echo "$@" && sleep 1
 }
-
 
 ## --------- keymaps -------------------------------------
 # loadkeys us
 
+
 ## --------- mirrors -------------------------------------
 set_mirrors() { #run as root
    # This function uses reflector to refresh arch mirrors.
-
+   
    comments "Installing reflector."
    pacman -S reflector --noconfirm --needed
 
@@ -67,8 +69,8 @@ set_mirrors() { #run as root
 
 ## --------- fstab --------------------------------------
 set_fstab() { #run from liveiso
-
    # This Function Generates fstab
+
    comments "Generating fstab"
 
  if [ "$NAME" = "Artix Linux" ]; then
@@ -80,7 +82,7 @@ set_fstab() { #run from liveiso
   This command is supposed to run from liveiso 
   If you are in chroot environment quit and go back to liveiso and try again.
   If you want to set fstab for and from your current system then. 
-  Install artix-install-scripts package, go to this script and check fstab function"
+  Install artix-install-scripts package, go to this script and check set_fstab function"
 
     # exit script if fstabgen command doesn't exist.
     [ $(command -v fstabgen) ] || exit
@@ -133,19 +135,17 @@ set_fstab() { #run from liveiso
 
 ## --------- locale --------------------------------------
 set_locale() { #run as root
+   # This Function Setups Locale.
+
    comments "Settingup locale."
-   
-   # example, add line 'en_IN.UTF-8 UTF-8' to /etc/locale.gen file
-   comments "Adding $LOCALE to locale.gen"
+   comments "Adding $LOCALE to locale.gen"     # example, add line 'en_IN.UTF-8 UTF-8' to /etc/locale.gen file
    grep "^${LOCALE%% *}" /etc/locale.gen >/dev/null || echo "$LOCALE" >> /etc/locale.gen
    
-   # example, add line 'LANG=en_IN.UTF-8' to /etc/locale.conf file
-   comments "Adding LANG=${LOCALE%% *} to locale.conf"
+   comments "Adding LANG=${LOCALE%% *} to locale.conf"  # example, add line 'LANG=en_IN.UTF-8' to /etc/locale.conf file
    [ -f "/etc/locale.conf" ] || touch /etc/locale.conf
    grep "^LANG=${LOCALE%% *}" /etc/locale.conf >/dev/null || echo "LANG=${LOCALE%% *}" > /etc/locale.conf
 
-   # example, add line 'LC_ALL=en_IN.UTF-8' to /etc/environment file
-   comments "Adding LC_ALL=${LOCALE%% *} to /etc/environment"
+   comments "Adding LC_ALL=${LOCALE%% *} to /etc/environment"  # example, add line 'LC_ALL=en_IN.UTF-8' to /etc/environment file
    grep "^LC_ALL=${LOCALE%% *}" /etc/environment >/dev/null || echo "LC_ALL=${LOCALE%% *}" >> /etc/environment
 
    comments "Generating locale"
@@ -154,14 +154,16 @@ set_locale() { #run as root
 
 ## --------- hosts --------------------------------------
 set_hosts() { #run as root
+   # This Function Setups hostname.
+   
    comments "Adding host $HOSTNAME to /etc/hostname and /etc/hosts"
-
    # set hostname
    [ -f "/etc/hostname" ]  ||  touch /etc/hostname
-   grep "$HOSTNAME" /etc/hostname  >/dev/null || echo $HOSTNAME > /etc/hostname
+   grep "$HOSTNAME" /etc/hostname >/dev/null || echo $HOSTNAME > /etc/hostname
 
+   # Everyone do different things in hosts file. you can edit following lines if you want to change.
    # stop adding hostname to hosts if already set.
-   grep "$HOSTNAME.localdomain" /etc/hosts >/dev/null && return
+   grep "$HOSTNAME" /etc/hosts >/dev/null && return
 
    # echo hostname in hosts.
 echo "
@@ -173,6 +175,8 @@ echo "
 
 ## --------- time --------------------------------------
 set_time() { #run as root
+   # This Function Setups time.
+
    comments "Setting up time"
    if [ "$NAME" = "Artix Linux" ]; then
      # Link localtime only if doesn't exist already
@@ -197,7 +201,7 @@ set_time() { #run as root
 
 ## --------- NetworkManager, Bluetooth ------------------------------
 set_network() { #run as root
-
+   # This Function Installs and starts NetworkManager.
    comments "Settingup NetworkManager and Bluetooth"
 
  if [ "$NAME" = "Artix Linux" ]; then
@@ -283,13 +287,13 @@ packages() { #run as root
   fi
 
    # Install audio.
-   comments "Installing Pipewire. (and pamixer, pactl, pulsemixer, to control audio)"
+   comments "Installing Pipewire. (and pamixer, pactl, pulsemixer for audio control)"
    pacman -S pipewire pipewire-media-session pipewire-pulse pipewire-alsa pamixer libpulse pulsemixer --needed --noconfirm
    # alsa-utils alsa-plugins libpulse
 
    # Install essential packages.
-   comments Installing git, bc, ffmpeg, fzf, mpd, neovim, unrar, unzip, tar, wildmidi, rsync, zsh, imagemagick
-   pacman -S bc git ffmpeg fzf mpd neovim unrar unzip tar rsync zsh imagemagick --needed --noconfirm
+   comments "Installing bc git fzf neovim unrar unzip tar rsync"
+   pacman -S bc git fzf neovim unrar unzip tar rsync --needed --noconfirm
 } 
 
 ## --------- Create User ------------------------------
@@ -351,7 +355,7 @@ install_gui() { #run as user
 
    yay -S awesome-git brave-bin picom-jonaburg-git timidity++ mpc ncmpcpp lf-git eww-git dashbinsh --needed --noconfirm
 
-   sudo pacman -S kitty mpv wildmidi feh dunst ueberzug rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
+   sudo pacman -S kitty mpv mpd ffmpeg wildmidi imagemagick feh dunst ueberzug rofi pavucontrol maim thunar lxappearance bspwm sxhkd blueberry --needed --noconfirm
 }
 
 ## --------- Copy dotfiles. ------------------------------
@@ -389,6 +393,7 @@ freshinstall() { #run from chroot.
    set_sudo && success "added $USERNAME to sudoers" || fail "Setting sudo"
    set_network && success "Installed and enabled NetworkManager." || fail "Setting up NetworkManager"
    install_grub && success "Installed Grub." || fail "Grub Install"
+   packages && success "Installed Packages" || fail "Installing packages"
    comments "Everything seems to went Successfully, don't forget to set root password before rebooting"
    passwd
 }
@@ -409,12 +414,6 @@ Include = /etc/pacman.d/mirrorlist-arch
 " >> pacman.conf
 
    pacman-key --populate archlinux
-}
-
-## ----------- Install packages ------------------
-extrapackages() {
-[ "$NAME" = "Artix Linux" ] && comments "some of the packages are from archlinux repositories. \nadd archlinux repo support, cancel script now, try again later.\nor press [Enter] to go ahead."  && read -r check
-packages && success "Installed necessary packages" || fail "Install packages"
 }
 
 ## ------------ User Specific and GUI ---------------
@@ -444,4 +443,4 @@ usersetup() { # run this as a user.
 
 ## ----------------------------------------------------
 
-"$@" 2>errors
+"$@" |& tee arch_script.log
