@@ -39,22 +39,21 @@ fi
 
 ## --------- config -----------------------------------
 . /etc/os-release
-LOCALE="en_IN.UTF-8 UTF-8"  #Keep it in this format only, check locale.gen file for reference.
-HOSTNAME="$ID"   #ID is name of distribution in lowercase i.e. arch,artix,...
-USERNAME="niraj" #username
-TIMEZONE="Asia/Kolkata"  #Keep it in this format only.
 
+LOCALE="en_IN.UTF-8 UTF-8"    #Keep it in this format only, check locale.gen file for list and reference.
+HOSTNAME="$ID"    #ID is name of distribution in lowercase i.e. arch,artix,...
+USERNAME="niraj"    #Username
+TIMEZONE="Asia/Kolkata"  #Keep it in this format only.
 
 ## -------------------------------------------------------
 comments() { 
     # This Function echos all of it's arguments.
-
+    # sleep 1 to make it readable, you can remove it safely.
     echo "$@" && sleep 1
 }
 
 ## --------- keymaps -------------------------------------
 # loadkeys us
-
 
 ## --------- mirrors -------------------------------------
 set_mirrors() { #run as root
@@ -378,11 +377,11 @@ git_setup() { #run as user
 
 ## --------- Arch Installation ---------------------------------
 fail() {
-   echo "$@ Failed " && exit 
+   echo "$@ \033[31m Failed \033[00m" && exit 
 }
  
 success() {
-   echo "Successfully $@" && sleep 2
+   echo "\033[1;32mSuccessfully\033[00m $@" && sleep 2
 }
 
 freshinstall() { #run from chroot.
@@ -443,4 +442,4 @@ usersetup() { # run this as a user.
 
 ## ----------------------------------------------------
 
-"$@" |& tee arch_script.log
+"$@" | tee -a arch.log
